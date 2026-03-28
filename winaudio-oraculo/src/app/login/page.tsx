@@ -1,19 +1,17 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Lock, Mail, ArrowRight } from 'lucide-react';
 import { authService } from '@/services';
 import { Input, Button, LoadingSpinner } from '@/components/ui';
 
-// 1. Separamos a lógica do Login em um componente interno
 function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/normas';
 
@@ -31,14 +29,13 @@ function LoginContent() {
     }
 
     if (user) {
-      router.refresh();
-      
-      // Verificar se é admin_global para redirecionar para área admin
+      // Usar window.location.href em vez de router.push resolve de vez qualquer
+      // problema de corrida de cache entre o Middleware e o React Context
       const profile = await authService.getUserProfile();
       if (profile?.role === 'admin_global' || profile?.role === 'gestor_setor') {
-        router.push('/admin/rules');
+        window.location.href = '/admin/rules';
       } else {
-        router.push(redirectTo);
+        window.location.href = redirectTo;
       }
     }
   };
@@ -59,7 +56,6 @@ function LoginContent() {
   );
 }
 
-// 2. A página principal agora apenas embrulha o conteúdo no Suspense
 export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[var(--color-bg-base)] flex items-center justify-center p-4 font-sans">
