@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+:root {
+  /* ===== WinAudio Design System Colors ===== */
+  
+  /* Primary - Roxo Vibrante */
+  --color-primary: #55419b;
+  --color-primary-light: #7c6bb5;
+  --color-primary-dark: #3c1e69;
+  
+  /* Secondary - Ciano/Verde */
+  --color-secondary: #14afaf;
+  --color-secondary-light: #4dc9c9;
+  --color-secondary-dark: #008787;
+  
+  /* Background */
+  --color-bg-base: #f6f6f6;
+  --color-bg-white: #ffffff;
+  --color-bg-muted: #f1f5f9;
+  
+  /* Text Colors */
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #6b7280;
+  --color-text-light: #9ca3af;
+  --color-text-inverse: #ffffff;
+  
+  /* Border Colors */
+  --color-border: #e5e7eb;
+  --color-border-light: #f3f4f6;
+  
+  /* Status Colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+  
+  /* Legacy support */
+  --background: var(--color-bg-white);
+  --foreground: var(--color-text-primary);
+}
+
+@theme inline {
+  /* Primary Colors */
+  --color-primary-500: var(--color-primary);
+  --color-primary-400: var(--color-primary-light);
+  --color-primary-700: var(--color-primary-dark);
+  
+  /* Secondary Colors */
+  --color-secondary-500: var(--color-secondary);
+  --color-secondary-400: var(--color-secondary-light);
+  --color-secondary-600: var(--color-secondary-dark);
+  
+  /* Semantic Colors */
+  --color-background: var(--color-bg-base);
+  --color-foreground: var(--color-text-primary);
+  --color-muted: var(--color-text-muted);
+  --color-accent: var(--color-secondary);
+  
+  /* Fonts */
+  --font-sans: var(--font-geist-sans), 'Poppins', Arial, sans-serif;
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: 'Poppins', Arial, Helvetica, sans-serif;
+}
+
+/* Utility classes for WinAudio colors */
+.text-primary { color: var(--color-primary) !important; }
+.text-primary-dark { color: var(--color-primary-dark) !important; }
+.text-secondary { color: var(--color-secondary) !important; }
+.text-body { color: var(--color-text-primary) !important; }
+.text-body-secondary { color: var(--color-text-secondary) !important; }
+.text-muted { color: var(--color-text-muted) !important; }
+
+.bg-primary { background-color: var(--color-primary) !important; }
+.bg-primary-dark { background-color: var(--color-primary-dark) !important; }
+.bg-secondary { background-color: var(--color-secondary) !important; }
+.bg-base { background-color: var(--color-bg-base) !important; }
+
+.border-primary { border-color: var(--color-primary) !important; }
+.border-secondary { border-color: var(--color-secondary) !important; }
+
+/* Cursor styles for interactive elements */
+button,
+[role="button"],
+a,
+select,
+input[type="checkbox"],
+input[type="radio"],
+input[type="submit"],
+input[type="button"],
+.cursor-pointer {
+  cursor: pointer;
+}
+
+button:disabled,
+[disabled] {
+  cursor: not-allowed;
+}
