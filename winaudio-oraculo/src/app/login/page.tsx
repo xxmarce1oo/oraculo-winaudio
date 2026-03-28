@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Mail, ArrowRight } from 'lucide-react';
 import { authService } from '@/services';
-import { Input, Button } from '@/components/ui';
+import { Input, Button, LoadingSpinner } from '@/components/ui';
 
-export default function LoginPage() {
+// 1. Separamos a lógica do Login em um componente interno
+function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,19 +44,28 @@ export default function LoginPage() {
   };
 
   return (
+    <div className="max-w-4xl w-full bg-[var(--color-bg-white)] rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+      <LoginBranding />
+      <LoginForm
+        email={email}
+        password={password}
+        loading={loading}
+        error={error}
+        onEmailChange={setEmail}
+        onPasswordChange={setPassword}
+        onSubmit={handleLogin}
+      />
+    </div>
+  );
+}
+
+// 2. A página principal agora apenas embrulha o conteúdo no Suspense
+export default function LoginPage() {
+  return (
     <div className="min-h-screen bg-[var(--color-bg-base)] flex items-center justify-center p-4 font-sans">
-      <div className="max-w-4xl w-full bg-[var(--color-bg-white)] rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
-        <LoginBranding />
-        <LoginForm
-          email={email}
-          password={password}
-          loading={loading}
-          error={error}
-          onEmailChange={setEmail}
-          onPasswordChange={setPassword}
-          onSubmit={handleLogin}
-        />
-      </div>
+      <Suspense fallback={<LoadingSpinner message="Carregando portal..." />}>
+        <LoginContent />
+      </Suspense>
     </div>
   );
 }
