@@ -101,3 +101,190 @@ button:disabled,
 [disabled] {
   cursor: not-allowed;
 }
+
+/* ===== Prose Typography Styles ===== */
+.prose {
+  color: var(--color-text-primary);
+  max-width: 65ch;
+  line-height: 1.75;
+}
+
+.prose p {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+}
+
+.prose h1 {
+  color: var(--color-primary-dark);
+  font-weight: 800;
+  font-size: 2.25em;
+  margin-top: 0;
+  margin-bottom: 0.8888889em;
+  line-height: 1.1111111;
+}
+
+.prose h2 {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+  font-size: 1.5em;
+  margin-top: 2em;
+  margin-bottom: 1em;
+  line-height: 1.3333333;
+}
+
+.prose h3 {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  font-size: 1.25em;
+  margin-top: 1.6em;
+  margin-bottom: 0.6em;
+  line-height: 1.6;
+}
+
+.prose h4 {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.5;
+}
+
+.prose strong {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.prose a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.prose a:hover {
+  color: var(--color-primary-dark);
+}
+
+.prose ul {
+  list-style-type: disc;
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  padding-left: 1.625em;
+}
+
+.prose ol {
+  list-style-type: decimal;
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  padding-left: 1.625em;
+}
+
+.prose li {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose blockquote {
+  font-weight: 500;
+  font-style: italic;
+  color: var(--color-text-secondary);
+  border-left: 0.25rem solid var(--color-primary);
+  padding-left: 1em;
+  margin-top: 1.6em;
+  margin-bottom: 1.6em;
+}
+
+.prose code {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  font-size: 0.875em;
+  background-color: var(--color-bg-muted);
+  padding: 0.2em 0.4em;
+  border-radius: 0.375rem;
+}
+
+.prose pre {
+  color: var(--color-text-inverse);
+  background-color: var(--color-primary-dark);
+  overflow-x: auto;
+  font-weight: 400;
+  font-size: 0.875em;
+  line-height: 1.7142857;
+  margin-top: 1.7142857em;
+  margin-bottom: 1.7142857em;
+  border-radius: 0.75rem;
+  padding: 0.8571429em 1.1428571em;
+}
+
+.prose pre code {
+  background-color: transparent;
+  border-width: 0;
+  border-radius: 0;
+  padding: 0;
+  font-weight: inherit;
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.prose hr {
+  border-color: var(--color-border);
+  margin-top: 3em;
+  margin-bottom: 3em;
+}
+
+.prose table {
+  width: 100%;
+  table-layout: auto;
+  text-align: left;
+  margin-top: 2em;
+  margin-bottom: 2em;
+  font-size: 0.875em;
+  line-height: 1.7142857;
+}
+
+.prose thead {
+  border-bottom-width: 1px;
+  border-bottom-color: var(--color-border);
+}
+
+.prose thead th {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  vertical-align: bottom;
+  padding-right: 0.5714286em;
+  padding-bottom: 0.5714286em;
+  padding-left: 0.5714286em;
+}
+
+.prose tbody tr {
+  border-bottom-width: 1px;
+  border-bottom-color: var(--color-border-light);
+}
+
+.prose tbody td {
+  vertical-align: baseline;
+  padding: 0.5714286em;
+}
+
+/* Prose size variants */
+.prose-lg {
+  font-size: 1.125rem;
+  line-height: 1.7777778;
+}
+
+.prose-lg p {
+  margin-top: 1.3333333em;
+  margin-bottom: 1.3333333em;
+}
+
+/* Prose color variants */
+.prose-slate {
+  --tw-prose-body: var(--color-text-primary);
+  --tw-prose-headings: var(--color-primary-dark);
+  --tw-prose-links: var(--color-primary);
+}
+
+/* Max width none */
+.prose.max-w-none {
+  max-width: none;
+}

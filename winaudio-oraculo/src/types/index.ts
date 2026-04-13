@@ -2,11 +2,31 @@
 
 export * from './user';
 
-export type RuleType = 'me_consulte' | 'oraculo';
+export type RuleType = 'procedimentos' | 'normativa' | 'me_consulte' | 'faq';
+export type RuleStatus = 'vigente' | 'atualizacao_recente' | 'obsoleta';
+
+export const RULE_TYPE_LABELS: Record<RuleType, string> = {
+  procedimentos: 'Procedimentos',
+  normativa: 'Normativa',
+  me_consulte: 'Me Consulte',
+  faq: 'FAQ',
+};
+
+export const RULE_STATUS_LABELS: Record<RuleStatus, string> = {
+  vigente: 'Vigente',
+  atualizacao_recente: 'Atualização Recente',
+  obsoleta: 'Obsoleta',
+};
 
 export interface Department {
   id: string;
   name: string;
+}
+
+export interface RuleAttachment {
+  name: string;
+  url: string;
+  size?: number;
 }
 
 export interface Rule {
@@ -14,17 +34,28 @@ export interface Rule {
   title: string;
   content?: string;
   type: RuleType;
+  status: RuleStatus;
   department_id: string | null;
   created_at: string;
+  updated_at?: string;
   created_by?: string | null;
   departments?: Department[] | null;
+  video_url?: string | null;
+  attachments?: RuleAttachment[] | null;
+  replaced_by_id?: string | null;
+  replaced_by_title?: string | null;
+  reading_time_minutes?: number;
 }
 
 export interface RuleFormData {
   title: string;
   content: string;
   type: RuleType;
+  status: RuleStatus;
   department_id: string | null;
+  video_url?: string | null;
+  attachments?: RuleAttachment[] | null;
+  replaced_by_id?: string | null;
   created_by?: string | null;
 }
 

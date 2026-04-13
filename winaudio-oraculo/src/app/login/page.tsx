@@ -9,6 +9,7 @@ import { Input, Button, LoadingSpinner } from '@/components/ui';
 function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,10 +47,12 @@ function LoginContent() {
       <LoginForm
         email={email}
         password={password}
+        rememberMe={rememberMe}
         loading={loading}
         error={error}
         onEmailChange={setEmail}
         onPasswordChange={setPassword}
+        onRememberMeChange={setRememberMe}
         onSubmit={handleLogin}
       />
     </div>
@@ -96,20 +99,24 @@ function LoginBranding() {
 interface LoginFormProps {
   email: string;
   password: string;
+  rememberMe: boolean;
   loading: boolean;
   error: string | null;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
+  onRememberMeChange: (value: boolean) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
 function LoginForm({
   email,
   password,
+  rememberMe,
   loading,
   error,
   onEmailChange,
   onPasswordChange,
+  onRememberMeChange,
   onSubmit,
 }: LoginFormProps) {
   return (
@@ -145,6 +152,30 @@ function LoginForm({
           placeholder="••••••••"
           icon={<Lock size={18} />}
         />
+
+        <label className="flex items-center gap-3 cursor-pointer select-none group">
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => onRememberMeChange(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-5 h-5 rounded-lg border-2 border-gray-200 bg-gray-50 peer-checked:bg-[var(--color-primary)] peer-checked:border-[var(--color-primary)] transition-all duration-200 peer-focus:ring-2 peer-focus:ring-[var(--color-primary)]/30" />
+            <svg
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity duration-200"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={3}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <span className="text-sm text-[var(--color-text-muted)] group-hover:text-[var(--color-text-dark)] transition-colors">
+            Manter-me conectado
+          </span>
+        </label>
 
         <Button
           type="submit"

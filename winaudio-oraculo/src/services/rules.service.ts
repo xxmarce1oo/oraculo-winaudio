@@ -11,9 +11,15 @@ export const rulesService = {
           id, 
           title, 
           content,
-          type, 
+          type,
+          status,
           department_id, 
           created_at,
+          updated_at,
+          video_url,
+          attachments,
+          replaced_by_id,
+          reading_time_minutes,
           departments ( id, name )
         `)
         .order('created_at', { ascending: false });
@@ -39,9 +45,15 @@ export const rulesService = {
           id, 
           title, 
           content,
-          type, 
+          type,
+          status,
           department_id, 
           created_at,
+          updated_at,
+          video_url,
+          attachments,
+          replaced_by_id,
+          reading_time_minutes,
           departments ( id, name )
         `)
         .eq('id', id)
