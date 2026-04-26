@@ -8,11 +8,11 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: Request) {
   try {
-    const { email, password, full_name, role, department_id } = await request.json();
+    const { email, password, full_name, role, department_id, cargo } = await request.json();
 
-    if (!email || !password || !full_name || !role) {
+    if (!email || !password || !full_name || !role || !cargo) {
       return NextResponse.json(
-        { error: 'Campos obrigatórios: email, password, full_name, role' },
+        { error: 'Campos obrigatórios: email, password, full_name, role, cargo' },
         { status: 400 }
       );
     }
@@ -40,6 +40,7 @@ export async function POST(request: Request) {
         full_name,
         role,
         department_id: department_id || null,
+        cargo,
       });
 
     if (profileError) {
@@ -75,6 +76,7 @@ export async function GET() {
         full_name,
         role,
         department_id,
+        cargo,
         created_at,
         departments ( id, name )
       `)
@@ -93,7 +95,7 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    const { id, full_name, role, department_id } = await request.json();
+    const { id, full_name, role, department_id, cargo } = await request.json();
 
     if (!id) {
       return NextResponse.json({ error: 'ID do usuário é obrigatório' }, { status: 400 });
@@ -103,6 +105,7 @@ export async function PUT(request: Request) {
     if (full_name !== undefined) updateData.full_name = full_name;
     if (role !== undefined) updateData.role = role;
     if (department_id !== undefined) updateData.department_id = department_id;
+    if (cargo !== undefined) updateData.cargo = cargo;
 
     console.log('API: Atualizando perfil:', id, updateData);
 

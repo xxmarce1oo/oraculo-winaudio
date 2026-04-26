@@ -1,6 +1,7 @@
 // Types centralizados do projeto WinAudio Oráculo
 
 export * from './user';
+export * from './salas';
 
 export type RuleType = 'procedimentos' | 'normativa' | 'me_consulte' | 'faq';
 export type RuleStatus = 'vigente' | 'atualizacao_recente' | 'obsoleta';

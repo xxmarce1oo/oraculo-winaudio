@@ -1,48 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { authService } from '@/services';
 import { LoadingSpinner } from '@/components/ui';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
+  const { profile, isLoading, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    async function checkSessionAndRedirect() {
-      try {
-        const user = await authService.getCurrentUser();
+    if (isLoading) return;
 
-        if (!user) {
-          router.replace('/login');
-          return;
-        }
-
-        const profile = await authService.getUserProfile();
-
-        if (profile?.role === 'admin_global' || profile?.role === 'gestor_setor') {
-          router.replace('/admin/rules');
-        } else {
-          router.replace('/normas');
-        }
-      } catch {
-        router.replace('/login');
-      } finally {
-        setChecking(false);
-      }
+    if (!isAuthenticated) {
+      router.replace('/login');
+      return;
     }
 
-    checkSessionAndRedirect();
-  }, [router]);
+    if (profile?.role === 'admin_global' || profile?.role === 'gestor_setor') {
+      router.replace('/admin/rules');
+    } else {
+      router.replace('/normas');
+    }
+  }, [isLoading, isAuthenticated, profile, router]);
 
-  if (checking) {
-    return (
-      <div className="min-h-screen bg-[var(--color-bg-base)] flex items-center justify-center">
-        <LoadingSpinner message="Verificando sessão..." />
-      </div>
-    );
-  }
-
-  return null;
+  return (
+    <div className="min-h-screen bg-[var(--color-bg-base)] flex items-center justify-center">
+      <LoadingSpinner message="Carregando..." />
+    </div>
+  );
 }

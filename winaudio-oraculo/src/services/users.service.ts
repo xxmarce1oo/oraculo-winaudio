@@ -40,7 +40,7 @@ export const usersService = {
         return { data: null, error: 'Erro ao buscar usuário' };
       }
 
-      return { data: data as UserProfile, error: null };
+      return { data: data as unknown as UserProfile, error: null };
     } catch (error) {
       console.error('Erro inesperado:', error);
       return { data: null, error: 'Erro inesperado ao buscar usuário' };

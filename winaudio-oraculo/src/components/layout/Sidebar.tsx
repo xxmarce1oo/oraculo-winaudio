@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, MessageCircle, LogOut, User, FileText, Users, Building } from 'lucide-react';
+import { BookOpen, MessageCircle, LogOut, User, FileText, Users, Building, CalendarDays } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Logo } from './Logo';
 import { authService } from '@/services';
@@ -16,10 +16,12 @@ interface NavItem {
 const baseNavItems: NavItem[] = [
   { label: 'Normas', href: '/normas', icon: <BookOpen size={20} /> },
   { label: 'Oráculo IA', href: '/normas/chat', icon: <MessageCircle size={20} /> },
+  { label: 'Salas', href: '/salas', icon: <CalendarDays size={20} /> },
 ];
 
 const adminNavItems: NavItem[] = [
   { label: 'Gestão de Normas', href: '/admin/rules', icon: <FileText size={20} />, adminOnly: true },
+  { label: 'Gestão de Salas', href: '/admin/salas', icon: <CalendarDays size={20} />, adminOnly: true },
   { label: 'Gestão de Usuários', href: '/admin/users', icon: <Users size={20} />, adminOnly: true },
   { label: 'Gestão de Setores', href: '/admin/departments', icon: <Building size={20} />, adminOnly: true },
 ];

@@ -26,6 +26,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, onUpdate, editingUser
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<UserRole>('funcionario');
   const [departmentId, setDepartmentId] = useState('');
+  const [cargo, setCargo] = useState('');
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchingDeps, setFetchingDeps] = useState(true);
@@ -39,6 +40,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, onUpdate, editingUser
         setFullName(editingUser.full_name || '');
         setRole(editingUser.role);
         setDepartmentId(editingUser.department_id || '');
+        setCargo(editingUser.cargo || '');
       } else {
         resetForm();
       }
@@ -57,6 +59,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, onUpdate, editingUser
     setFullName('');
     setRole('funcionario');
     setDepartmentId('');
+    setCargo('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,6 +71,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, onUpdate, editingUser
         full_name: fullName,
         role,
         department_id: departmentId || null,
+        cargo,
       });
     } else {
       await onSubmit({
@@ -76,6 +80,7 @@ export function UserFormModal({ isOpen, onClose, onSubmit, onUpdate, editingUser
         full_name: fullName,
         role,
         department_id: departmentId || null,
+        cargo,
       });
     }
 
@@ -149,6 +154,15 @@ export function UserFormModal({ isOpen, onClose, onSubmit, onUpdate, editingUser
             placeholder="Nome do colaborador"
           />
 
+          <Input
+            label="Cargo"
+            type="text"
+            required
+            value={cargo}
+            onChange={(e) => setCargo(e.target.value)}
+            placeholder="Ex: Analista de TI, Gerente Comercial"
+          />
+
           <Select
             label="Função"
             required
@@ -157,16 +171,15 @@ export function UserFormModal({ isOpen, onClose, onSubmit, onUpdate, editingUser
             options={roleOptions}
           />
 
-          {role !== 'admin_global' && (
-            <Select
-              label="Setor"
-              value={departmentId}
-              onChange={(e) => setDepartmentId(e.target.value)}
-              options={departmentOptions}
-              placeholder="Selecione o setor..."
-              disabled={fetchingDeps}
-            />
-          )}
+          <Select
+            label="Setor"
+            required
+            value={departmentId}
+            onChange={(e) => setDepartmentId(e.target.value)}
+            options={departmentOptions}
+            placeholder="Selecione o setor..."
+            disabled={fetchingDeps}
+          />
 
           <div className="pt-4 border-t border-[var(--color-border-light)] flex justify-end gap-3">
             <Button type="button" variant="ghost" onClick={onClose}>

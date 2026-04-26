@@ -5,8 +5,9 @@ export interface UserProfile {
   full_name: string | null;
   role: UserRole;
   department_id: string | null;
+  cargo: string | null;
   created_at: string;
-  departments?: { id: string; name: string }[] | null;
+  departments?: { id: string; name: string } | null;
 }
 
 export interface CreateUserData {
@@ -15,10 +16,12 @@ export interface CreateUserData {
   full_name: string;
   role: UserRole;
   department_id: string | null;
+  cargo: string;
 }
 
 export interface UpdateUserData {
   full_name?: string;
   role?: UserRole;
   department_id?: string | null;
+  cargo?: string;
 }

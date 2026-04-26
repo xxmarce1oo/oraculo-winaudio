@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { LoadingSpinner } from '@/components/ui';
 import { useAuth } from '@/context/AuthContext';
 
@@ -24,24 +23,10 @@ export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
       return;
     }
 
-    if (requireAdmin && profile && profile.role !== 'admin_global' && profile.role !== 'gestor_setor') {
+    if (requireAdmin && profile?.role !== 'admin_global' && profile?.role !== 'gestor_setor') {
       router.push('/normas');
-      return;
     }
   }, [isLoading, isAuthenticated, profile, requireAdmin, router, pathname]);
-
-  useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
-        router.push('/login');
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [router]);
 
   if (isLoading) {
     return (
@@ -51,9 +36,7 @@ export function AuthGuard({ children, requireAdmin = false }: AuthGuardProps) {
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
 
   return <>{children}</>;
 }

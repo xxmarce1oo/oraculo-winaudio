@@ -111,7 +111,7 @@ export function UsersTable({ users, onEdit, onDelete }: UsersTableProps) {
                       <p className="text-sm font-semibold text-[var(--color-primary-dark)]">
                         {user.full_name || 'Sem nome'}
                       </p>
-                      <p className="text-xs text-[var(--color-text-light)]">ID: {user.id.slice(0, 8)}...</p>
+                      <p className="text-xs text-[var(--color-text-muted)]">{user.cargo || '—'}</p>
                     </div>
                   </div>
                 </td>
@@ -122,7 +122,7 @@ export function UsersTable({ users, onEdit, onDelete }: UsersTableProps) {
                 </td>
                 <td className="px-6 py-4">
                   <span className="text-sm text-[var(--color-text-secondary)]">
-                    {user.departments?.[0]?.name || 'Não definido'}
+                    {user.departments?.name || 'Não definido'}
                   </span>
                 </td>
                 <td className="px-6 py-4">
