@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, FileText, Video, CheckCircle, AlertTriangle, XCircle, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Save, FileText, Video, CheckCircle, AlertTriangle, XCircle, Link as LinkIcon, History, ChevronDown, ChevronUp } from 'lucide-react';
 import { rulesService, departmentsService } from '@/services';
 import { Button, Input, Select, Card, LoadingSpinner, RichTextEditor, Toast } from '@/components/ui';
 import { RuleTypeSelector } from '@/components/rules';
 import { FormularioNormativa, montarHtmlNormativa, htmlParaSecoes } from '@/components/rules/FormularioNormativa';
 import { AuthGuard } from '@/components/auth';
-import type { Department, RuleType, RuleStatus, Rule, NormativaSecoes } from '@/types';
+import type { Department, RuleType, RuleStatus, Rule, NormativaSecoes, RuleVersion } from '@/types';
 
 export default function EditRulePage() {
   return (
@@ -51,6 +51,8 @@ function EditRuleContent() {
 
   const [departments, setDepartments] = useState<Department[]>([]);
   const [allRules, setAllRules] = useState<Rule[]>([]);
+  const [versions, setVersions] = useState<RuleVersion[]>([]);
+  const [versionsOpen, setVersionsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [toast, setToast] = useState<{ open: boolean; message: string; variant: 'success' | 'error' }>({ open: false, message: '', variant: 'success' });
@@ -90,6 +92,10 @@ function EditRuleContent() {
 
     setDepartments(depsResult.data);
     setAllRules(rulesResult.data.filter((r: Rule) => r.id !== ruleId));
+
+    const { data: vers } = await rulesService.getVersions(ruleId);
+    setVersions(vers);
+
     setFetching(false);
   };
 
@@ -307,6 +313,37 @@ function EditRuleContent() {
                 <Video size={18} className="absolute right-3 top-9 text-[var(--color-text-light)]" />
               </div>
             </section>
+
+            {/* Histórico de versões */}
+            {versions.length > 0 && (
+              <section>
+                <button
+                  type="button"
+                  onClick={() => setVersionsOpen(v => !v)}
+                  className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors"
+                >
+                  <History size={16} />
+                  Histórico de versões ({versions.length})
+                  {versionsOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+
+                {versionsOpen && (
+                  <div className="mt-3 border border-[var(--color-border)] rounded-xl overflow-hidden">
+                    {versions.map((v, i) => (
+                      <div key={v.id} className={`flex items-center justify-between px-4 py-3 text-sm ${i !== versions.length - 1 ? 'border-b border-[var(--color-border-light)]' : ''}`}>
+                        <div>
+                          <span className="font-medium text-[var(--color-text-primary)]">v{v.version_number}</span>
+                          <span className="text-[var(--color-text-muted)] ml-3">{v.title}</span>
+                        </div>
+                        <span className="text-xs text-[var(--color-text-light)]">
+                          {new Date(v.edited_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
 
             {/* Ações */}
             <div className="pt-6 border-t border-[var(--color-border-light)] flex items-center justify-between">

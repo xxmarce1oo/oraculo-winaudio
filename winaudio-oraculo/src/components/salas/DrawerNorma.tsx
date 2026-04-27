@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, BookOpen, FileText, Globe, HelpCircle, Calendar, Building, Clock } from 'lucide-react';
+import { X, BookOpen, FileText, Globe, HelpCircle, Calendar, Building, Clock, ExternalLink } from 'lucide-react';
 import { rulesService } from '@/services';
 import { LoadingSpinner } from '@/components/ui';
 import { RULE_TYPE_LABELS } from '@/types';
@@ -49,9 +49,22 @@ export function DrawerNorma({ ruleId, onFechar }: DrawerNormaProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)] flex-shrink-0">
           <span className="text-sm font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">Norma</span>
-          <button onClick={onFechar} className="p-2 rounded-xl hover:bg-[var(--color-bg-muted)] transition-colors">
-            <X size={20} className="text-[var(--color-text-muted)]" />
-          </button>
+          <div className="flex items-center gap-2">
+            {rule && (
+              <a
+                href={`/normativas/${rule.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] px-3 py-1.5 rounded-lg hover:bg-[var(--color-primary)]/10 transition-colors"
+              >
+                <ExternalLink size={13} />
+                Abrir completo
+              </a>
+            )}
+            <button onClick={onFechar} className="p-2 rounded-xl hover:bg-[var(--color-bg-muted)] transition-colors">
+              <X size={20} className="text-[var(--color-text-muted)]" />
+            </button>
+          </div>
         </div>
 
         {/* Conteúdo */}

@@ -76,6 +76,16 @@ export interface NormativaSecoes {
   consequencias: string;
 }
 
+export interface RuleVersion {
+  id: string;
+  rule_id: string;
+  version_number: number;
+  title: string;
+  content?: string;
+  edited_by?: string | null;
+  edited_at: string;
+}
+
 export interface User {
   id: string;
   email?: string;

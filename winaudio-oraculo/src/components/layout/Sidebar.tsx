@@ -1,9 +1,10 @@
 'use client';
 
-import { BookOpen, MessageCircle, LogOut, User, FileText, Users, Building, CalendarDays } from 'lucide-react';
+import { BookOpen, MessageCircle, LogOut, User, FileText, Users, Building, CalendarDays, Bell } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Logo } from './Logo';
-import { authService } from '@/services';
+import { authService, avisosService } from '@/services';
 import { useAuth } from '@/context/AuthContext';
 
 interface NavItem {
@@ -11,29 +12,19 @@ interface NavItem {
   href: string;
   icon: React.ReactNode;
   adminOnly?: boolean;
+  badge?: number;
 }
 
-const baseNavItems: NavItem[] = [
-  { label: 'Normas', href: '/normas', icon: <BookOpen size={20} /> },
-  { label: 'Oráculo IA', href: '/normas/chat', icon: <MessageCircle size={20} /> },
-  { label: 'Salas', href: '/salas', icon: <CalendarDays size={20} /> },
-];
-
-const adminNavItems: NavItem[] = [
-  { label: 'Gestão de Normas', href: '/admin/rules', icon: <FileText size={20} />, adminOnly: true },
-  { label: 'Gestão de Salas', href: '/admin/salas', icon: <CalendarDays size={20} />, adminOnly: true },
-  { label: 'Gestão de Usuários', href: '/admin/users', icon: <Users size={20} />, adminOnly: true },
-  { label: 'Gestão de Setores', href: '/admin/departments', icon: <Building size={20} />, adminOnly: true },
-];
-
-interface SidebarProps {
-  variant?: 'admin' | 'employee';
-}
-
-export function Sidebar({ variant = 'employee' }: SidebarProps) {
+export function Sidebar({ variant = 'employee' }: { variant?: 'admin' | 'employee' }) {
   const router = useRouter();
   const pathname = usePathname();
   const { profile, isLoading } = useAuth();
+  const [unreadAvisos, setUnreadAvisos] = useState(0);
+
+  useEffect(() => {
+    if (!profile) return;
+    avisosService.countUnread().then(setUnreadAvisos);
+  }, [profile, pathname]); // recontagem ao navegar
 
   const handleLogout = async () => {
     await authService.logout();
@@ -42,15 +33,29 @@ export function Sidebar({ variant = 'employee' }: SidebarProps) {
   };
 
   const isActive = (href: string) => {
-    if (href === '/normas') {
-      return pathname === '/normas';
-    }
+    if (href === '/normas') return pathname === '/normas';
     return pathname?.startsWith(href);
   };
 
   const isAdmin = profile?.role === 'admin_global' || profile?.role === 'gestor_setor';
-  const allItems = isAdmin ? [...baseNavItems, ...adminNavItems] : baseNavItems;
   const subtitle = isAdmin ? 'Painel Gestor' : 'Portal do Colaborador';
+
+  const baseNavItems: NavItem[] = [
+    { label: 'Normas', href: '/normas', icon: <BookOpen size={20} /> },
+    { label: 'Oráculo IA', href: '/normas/chat', icon: <MessageCircle size={20} /> },
+    { label: 'Salas', href: '/salas', icon: <CalendarDays size={20} /> },
+    { label: 'Avisos', href: '/avisos', icon: <Bell size={20} />, badge: unreadAvisos },
+  ];
+
+  const adminNavItems: NavItem[] = [
+    { label: 'Gestão de Normas', href: '/admin/rules', icon: <FileText size={20} />, adminOnly: true },
+    { label: 'Gestão de Salas', href: '/admin/salas', icon: <CalendarDays size={20} />, adminOnly: true },
+    { label: 'Gestão de Usuários', href: '/admin/users', icon: <Users size={20} />, adminOnly: true },
+    { label: 'Gestão de Setores', href: '/admin/departments', icon: <Building size={20} />, adminOnly: true },
+    { label: 'Mural de Avisos', href: '/admin/avisos', icon: <Bell size={20} />, adminOnly: true },
+  ];
+
+  const allItems = isAdmin ? [...baseNavItems, ...adminNavItems] : baseNavItems;
 
   if (isLoading) {
     return (
@@ -91,7 +96,14 @@ export function Sidebar({ variant = 'employee' }: SidebarProps) {
                 }
               `}
             >
-              {item.icon}
+              <span className="relative flex-shrink-0">
+                {item.icon}
+                {item.badge != null && item.badge > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
+              </span>
               {item.label}
             </button>
           </div>

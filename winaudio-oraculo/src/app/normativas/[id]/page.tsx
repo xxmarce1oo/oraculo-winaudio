@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  ArrowLeft, 
-  ChevronRight, 
-  Calendar, 
-  Building, 
-  Hash, 
+import {
+  ArrowLeft,
+  ChevronRight,
+  Calendar,
+  Building,
+  Hash,
   Printer,
   FileText,
   BookOpen,
@@ -17,11 +17,14 @@ import {
   Clock,
   AlertTriangle,
   XCircle,
-  ExternalLink
+  ExternalLink,
+  CheckCircle2
 } from 'lucide-react';
 import { rulesService } from '@/services';
 import { LoadingSpinner } from '@/components/ui';
 import { AuthGuard } from '@/components/auth';
+import { useAuth } from '@/context/AuthContext';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import type { Rule, RuleType, RuleStatus } from '@/types';
 import { RULE_TYPE_LABELS, RULE_STATUS_LABELS } from '@/types';
 
@@ -63,27 +66,39 @@ function ArticleContent() {
   const router = useRouter();
   const id = params.id as string;
 
+  const { profile } = useAuth();
   const [rule, setRule] = useState<Rule | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [jaLeu, setJaLeu] = useState(false);
+  const [marcandoLeitura, setMarcandoLeitura] = useState(false);
 
   useEffect(() => {
-    async function fetchRule() {
-      setLoading(true);
-      const { data, error: fetchError } = await rulesService.getById(id);
-      
-      if (fetchError || !data) {
-        setError('Documento não encontrado.');
-      } else {
-        setRule(data);
-      }
+    if (!id) return;
+    setLoading(true);
+    rulesService.getById(id).then(({ data, error: fetchError }) => {
+      if (fetchError || !data) setError('Documento não encontrado.');
+      else setRule(data);
       setLoading(false);
-    }
-
-    if (id) {
-      fetchRule();
-    }
+    });
   }, [id]);
+
+  // Verifica se já marcou leitura
+  useEffect(() => {
+    if (!id || !profile) return;
+    const supabase = createSupabaseBrowserClient();
+    supabase.from('rule_readings').select('id').eq('rule_id', id).eq('user_id', profile.id).single()
+      .then(({ data }) => setJaLeu(!!data));
+  }, [id, profile]);
+
+  const handleMarcarLeitura = async () => {
+    if (jaLeu || marcandoLeitura || !profile) return;
+    setMarcandoLeitura(true);
+    const supabase = createSupabaseBrowserClient();
+    await supabase.from('rule_readings').upsert({ rule_id: id, user_id: profile.id });
+    setJaLeu(true);
+    setMarcandoLeitura(false);
+  };
 
   const handlePrint = () => {
     window.print();
@@ -325,9 +340,19 @@ function ArticleContent() {
           {/* Article Footer */}
           <div className="px-6 sm:px-8 py-6 bg-[var(--color-bg-muted)]/30 border-t border-[var(--color-border-light)] print:hidden">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-sm text-[var(--color-text-light)]">
-                Este documento faz parte da base de conhecimento WinAudio.
-              </p>
+              <button
+                onClick={handleMarcarLeitura}
+                disabled={jaLeu || marcandoLeitura}
+                className={`flex items-center gap-2 px-5 py-2.5 font-medium rounded-xl transition-all ${
+                  jaLeu
+                    ? 'bg-emerald-100 text-emerald-700 cursor-default'
+                    : 'bg-[var(--color-bg-muted)] text-[var(--color-text-muted)] hover:bg-emerald-50 hover:text-emerald-700 border border-[var(--color-border)]'
+                }`}
+              >
+                <CheckCircle2 size={18} />
+                {jaLeu ? 'Leitura confirmada' : marcandoLeitura ? 'Salvando...' : 'Confirmar leitura'}
+              </button>
+
               <button
                 onClick={handlePrint}
                 className="flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] text-white font-medium rounded-xl hover:bg-[var(--color-primary-dark)] transition-colors shadow-sm"
