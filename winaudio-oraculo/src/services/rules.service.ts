@@ -8,18 +8,21 @@ export const rulesService = {
       const { data, error } = await supabase
         .from('rules')
         .select(`
-          id, 
-          title, 
+          id,
+          title,
           content,
           type,
           status,
-          department_id, 
+          department_id,
           created_at,
           updated_at,
           video_url,
           attachments,
           replaced_by_id,
           reading_time_minutes,
+          codigo_wn,
+          vigencia_inicio,
+          vigencia_fim,
           departments ( id, name )
         `)
         .order('created_at', { ascending: false });
@@ -29,7 +32,7 @@ export const rulesService = {
         return { data: [], error: 'Erro ao buscar normas' };
       }
 
-      return { data: (data as Rule[]) || [], error: null };
+      return { data: (data as unknown as Rule[]) || [], error: null };
     } catch (error) {
       console.error('Erro inesperado:', error);
       return { data: [], error: 'Erro inesperado ao buscar normas' };
@@ -42,18 +45,21 @@ export const rulesService = {
       const { data, error } = await supabase
         .from('rules')
         .select(`
-          id, 
-          title, 
+          id,
+          title,
           content,
           type,
           status,
-          department_id, 
+          department_id,
           created_at,
           updated_at,
           video_url,
           attachments,
           replaced_by_id,
           reading_time_minutes,
+          codigo_wn,
+          vigencia_inicio,
+          vigencia_fim,
           departments ( id, name )
         `)
         .eq('id', id)
@@ -64,7 +70,7 @@ export const rulesService = {
         return { data: null, error: 'Erro ao buscar norma' };
       }
 
-      return { data: data as Rule, error: null };
+      return { data: data as unknown as Rule, error: null };
     } catch (error) {
       console.error('Erro inesperado:', error);
       return { data: null, error: 'Erro inesperado ao buscar norma' };

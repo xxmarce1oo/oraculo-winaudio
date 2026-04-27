@@ -4,13 +4,20 @@ import { useEffect, useRef, useState } from 'react';
 import { Send, MessageCircle, Loader } from 'lucide-react';
 import { EmployeeLayout, PageHeader } from '@/components/layout';
 import { AuthGuard } from '@/components/auth';
+import { useAuth } from '@/context/AuthContext';
+import { DrawerNorma } from '@/components/salas/DrawerNorma';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+
+interface Source {
+  id: string;
+  title: string;
+}
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  sources?: string[];
+  sources?: Source[];
   timestamp: Date;
 }
 
@@ -23,12 +30,14 @@ export default function ChatPage() {
 }
 
 function ChatContent() {
+  const { profile } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string>('');
+  const [drawerRuleId, setDrawerRuleId] = useState<string | null>(null);
+  const welcomeShown = useRef(false);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -37,40 +46,30 @@ function ChatContent() {
     return 'Boa noite';
   };
 
+  // Busca apenas o token — perfil já vem do contexto
   useEffect(() => {
-    const loadUserAndAuth = async () => {
-      const supabase = createSupabaseBrowserClient();
-      
-      // Obter sessão e token
-      const { data } = await supabase.auth.getSession();
+    const supabase = createSupabaseBrowserClient();
+    supabase.auth.getSession().then(({ data }) => {
       if (data.session?.access_token) {
         setAuthToken(data.session.access_token);
       }
-
-      // Obter perfil do usuário
-      const profile = await supabase
-        .from('profiles')
-        .select('full_name')
-        .single();
-
-      if (profile.data?.full_name) {
-        setUserName(profile.data.full_name);
-        
-        // Criar mensagem de boas-vindas
-        const greeting = getGreeting();
-        const welcomeMessage: Message = {
-          id: 'welcome-' + Date.now(),
-          role: 'assistant',
-          content: `${greeting}, ${profile.data.full_name}! 👋\n\nSou o Oráculo, seu assistente de inteligência artificial. Estou aqui para responder suas dúvidas sobre as normas e políticas da WinAudio.\n\nComo posso ajudá-lo hoje?`,
-          timestamp: new Date(),
-        };
-        
-        setMessages([welcomeMessage]);
-      }
-    };
-
-    loadUserAndAuth();
+    });
   }, []);
+
+  // Gera a boas-vindas uma única vez quando o perfil estiver disponível
+  useEffect(() => {
+    if (!profile || welcomeShown.current) return;
+    welcomeShown.current = true;
+
+    const greeting = getGreeting();
+    const nome = profile.full_name || 'Colaborador';
+    setMessages([{
+      id: 'welcome',
+      role: 'assistant',
+      content: `${greeting}, ${nome}! Estou aqui para ajudar. Como posso assisti-lo hoje?`,
+      timestamp: new Date(),
+    }]);
+  }, [profile]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -172,14 +171,19 @@ function ChatContent() {
                   }`}
                 >
                   <p className="text-sm leading-relaxed">{message.content}</p>
-                  {message.sources && message.sources.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-white/20">
-                      <p className="text-xs font-semibold mb-2 opacity-75">Fontes:</p>
-                      <ul className="text-xs space-y-1 opacity-75">
-                        {message.sources.map((source, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <span className="text-white/50">•</span>
-                            <span>{source}</span>
+                  {message.id !== 'welcome' && message.sources && message.sources.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-black/10">
+                      <p className="text-xs font-semibold mb-1.5 opacity-60">Fontes:</p>
+                      <ul className="text-xs space-y-1">
+                        {message.sources.map((source) => (
+                          <li key={source.id}>
+                            <button
+                              onClick={() => setDrawerRuleId(source.id)}
+                              className="flex items-center gap-1.5 opacity-70 hover:opacity-100 hover:underline transition-opacity text-left"
+                            >
+                              <span>•</span>
+                              <span>{source.title}</span>
+                            </button>
                           </li>
                         ))}
                       </ul>
@@ -229,6 +233,7 @@ function ChatContent() {
           </form>
         </div>
       </div>
+      <DrawerNorma ruleId={drawerRuleId} onFechar={() => setDrawerRuleId(null)} />
     </EmployeeLayout>
   );
 }

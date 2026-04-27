@@ -4,10 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Save, FileText, Video, CheckCircle, AlertTriangle, XCircle, Link as LinkIcon } from 'lucide-react';
 import { rulesService, departmentsService } from '@/services';
-import { Button, Input, Select, Card, LoadingSpinner, RichTextEditor } from '@/components/ui';
+import { Button, Input, Select, Card, LoadingSpinner, RichTextEditor, Toast } from '@/components/ui';
 import { RuleTypeSelector } from '@/components/rules';
+import { FormularioNormativa, montarHtmlNormativa, htmlParaSecoes } from '@/components/rules/FormularioNormativa';
 import { AuthGuard } from '@/components/auth';
-import type { Department, RuleType, RuleStatus, Rule } from '@/types';
+import type { Department, RuleType, RuleStatus, Rule, NormativaSecoes } from '@/types';
 
 export default function EditRulePage() {
   return (
@@ -23,6 +24,15 @@ const statusOptions: { value: RuleStatus; label: string; icon: React.ElementType
   { value: 'obsoleta', label: 'Obsoleta', icon: XCircle, color: 'text-red-500' },
 ];
 
+const secoesVazias: NormativaSecoes = {
+  objetivo: '',
+  passo_a_passo: '',
+  regras_restricoes: '',
+  procedimento_tecnico: '',
+  checklist_finalizacao: '',
+  consequencias: '',
+};
+
 function EditRuleContent() {
   const params = useParams();
   const ruleId = params.id as string;
@@ -35,11 +45,15 @@ function EditRuleContent() {
   const [content, setContent] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [replacedById, setReplacedById] = useState('');
+  const [secoes, setSecoes] = useState<NormativaSecoes>(secoesVazias);
+  const [vigenciaInicio, setVigenciaInicio] = useState('');
+  const [vigenciaFim, setVigenciaFim] = useState('');
 
   const [departments, setDepartments] = useState<Department[]>([]);
   const [allRules, setAllRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [toast, setToast] = useState<{ open: boolean; message: string; variant: 'success' | 'error' }>({ open: false, message: '', variant: 'success' });
 
   const router = useRouter();
 
@@ -49,7 +63,7 @@ function EditRuleContent() {
 
   const fetchData = async () => {
     setFetching(true);
-    
+
     const [ruleResult, depsResult, rulesResult] = await Promise.all([
       rulesService.getById(ruleId),
       departmentsService.getAll(),
@@ -66,6 +80,12 @@ function EditRuleContent() {
       setContent(r.content || '');
       setVideoUrl(r.video_url || '');
       setReplacedById(r.replaced_by_id || '');
+      setVigenciaInicio(r.vigencia_inicio || '');
+      setVigenciaFim(r.vigencia_fim || '');
+
+      if (r.type === 'normativa' && r.content) {
+        setSecoes(htmlParaSecoes(r.content));
+      }
     }
 
     setDepartments(depsResult.data);
@@ -73,25 +93,42 @@ function EditRuleContent() {
     setFetching(false);
   };
 
+  const setorSelecionado = departments.find((d) => d.id === departmentId);
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
+    let conteudoFinal = content;
+
+    if (type === 'normativa') {
+      conteudoFinal = montarHtmlNormativa(
+        title,
+        rule?.codigo_wn ?? 'WN000',
+        setorSelecionado?.name ?? '',
+        vigenciaInicio,
+        vigenciaFim,
+        secoes
+      );
+    }
+
     const { success, error } = await rulesService.update(ruleId, {
       title,
-      content,
+      content: conteudoFinal,
       type,
       status,
       department_id: type !== 'me_consulte' ? departmentId : null,
       video_url: videoUrl || null,
       replaced_by_id: status === 'obsoleta' && replacedById ? replacedById : null,
+      vigencia_inicio: type === 'normativa' ? vigenciaInicio || null : null,
+      vigencia_fim: type === 'normativa' ? vigenciaFim || null : null,
     });
 
     if (success) {
-      alert('Artigo atualizado com sucesso!');
-      router.push('/admin/rules');
+      setToast({ open: true, message: 'Artigo atualizado com sucesso!', variant: 'success' });
+      setTimeout(() => router.push('/admin/rules'), 1500);
     } else {
-      alert(error || 'Erro ao atualizar o artigo.');
+      setToast({ open: true, message: error || 'Erro ao atualizar o artigo.', variant: 'error' });
     }
 
     setLoading(false);
@@ -194,13 +231,11 @@ function EditRuleContent() {
                       key={option.value}
                       type="button"
                       onClick={() => setStatus(option.value)}
-                      className={`
-                        p-4 rounded-xl border-2 transition-all text-left
-                        ${isSelected
+                      className={`p-4 rounded-xl border-2 transition-all text-left ${
+                        isSelected
                           ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5'
                           : 'border-[var(--color-border)] hover:border-[var(--color-primary)]/50 bg-[var(--color-bg-white)]'
-                        }
-                      `}
+                      }`}
                     >
                       <Icon size={24} className={option.color} />
                       <p className={`mt-2 font-medium ${isSelected ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-primary)]'}`}>
@@ -231,16 +266,29 @@ function EditRuleContent() {
               )}
             </section>
 
-            {/* Conteúdo do Artigo */}
+            {/* Conteúdo — estruturado para normativa, livre para outros tipos */}
             <section>
               <h2 className="text-lg font-semibold text-[var(--color-primary-dark)] mb-4">
                 Conteúdo do Artigo
               </h2>
-              <RichTextEditor
-                content={content}
-                onChange={setContent}
-                placeholder="Escreva o conteúdo do artigo aqui..."
-              />
+
+              {type === 'normativa' ? (
+                <FormularioNormativa
+                  secoes={secoes}
+                  onChange={setSecoes}
+                  codigoWn={rule.codigo_wn ?? (departmentId ? `WN${setorSelecionado?.name.substring(0, 3).toUpperCase()}###` : '')}
+                  vigenciaInicio={vigenciaInicio}
+                  vigenciaFim={vigenciaFim}
+                  onVigenciaInicioChange={setVigenciaInicio}
+                  onVigenciaFimChange={setVigenciaFim}
+                />
+              ) : (
+                <RichTextEditor
+                  content={content}
+                  onChange={setContent}
+                  placeholder="Escreva o conteúdo do artigo aqui..."
+                />
+              )}
             </section>
 
             {/* Mídia */}
@@ -248,17 +296,15 @@ function EditRuleContent() {
               <h2 className="text-lg font-semibold text-[var(--color-primary-dark)] mb-4">
                 Mídia (Opcional)
               </h2>
-              <div className="space-y-4">
-                <div className="relative">
-                  <Input
-                    label="URL do Vídeo"
-                    type="url"
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                    placeholder="https://www.youtube.com/watch?v=... ou https://vimeo.com/..."
-                  />
-                  <Video size={18} className="absolute right-3 top-9 text-[var(--color-text-light)]" />
-                </div>
+              <div className="relative">
+                <Input
+                  label="URL do Vídeo"
+                  type="url"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=... ou https://vimeo.com/..."
+                />
+                <Video size={18} className="absolute right-3 top-9 text-[var(--color-text-light)]" />
               </div>
             </section>
 
@@ -284,6 +330,13 @@ function EditRuleContent() {
           </form>
         </Card>
       </div>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={() => setToast(t => ({ ...t, open: false }))}
+      />
     </div>
   );
 }

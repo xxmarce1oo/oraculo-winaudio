@@ -20,7 +20,7 @@ const typeConfig: Record<RuleType, { icon: React.ElementType; variant: 'primary'
 export function RuleCard({ rule }: RuleCardProps) {
   const getDepartmentName = (): string => {
     if (rule.type === 'me_consulte') return 'Todos os setores';
-    return rule.departments?.[0]?.name || 'Não definido';
+    return rule.departments?.name || 'Não definido';
   };
 
   const config = typeConfig[rule.type];

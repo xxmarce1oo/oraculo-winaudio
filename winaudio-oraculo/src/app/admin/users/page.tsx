@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { UserPlus, Users } from 'lucide-react';
 import { usersService } from '@/services';
 import { AdminLayout, PageHeader } from '@/components/layout';
-import { Button, SearchInput, LoadingSpinner, EmptyState } from '@/components/ui';
+import { Button, SearchInput, LoadingSpinner, EmptyState, Dialog, Toast } from '@/components/ui';
 import { UsersTable, UserFormModal } from '@/components/users';
 import { AuthGuard } from '@/components/auth';
 import type { UserProfile, CreateUserData, UpdateUserData } from '@/types';
@@ -23,6 +23,8 @@ function AdminUsersContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ open: boolean; message: string; variant: 'success' | 'error' }>({ open: false, message: '', variant: 'success' });
 
   useEffect(() => {
     fetchUsers();
@@ -37,25 +39,23 @@ function AdminUsersContent() {
 
   const handleCreateUser = async (userData: CreateUserData) => {
     const { success, error } = await usersService.create(userData);
-    
     if (success) {
-      alert('Usuário criado com sucesso!');
       setIsModalOpen(false);
       fetchUsers();
+      setToast({ open: true, message: 'Usuário criado com sucesso!', variant: 'success' });
     } else {
-      alert(error || 'Erro ao criar usuário.');
+      setToast({ open: true, message: error || 'Erro ao criar usuário.', variant: 'error' });
     }
   };
 
   const handleUpdateUser = async (id: string, userData: UpdateUserData) => {
     const { success, error } = await usersService.update(id, userData);
-    
     if (success) {
-      alert('Usuário atualizado com sucesso!');
       handleCloseModal();
       fetchUsers();
+      setToast({ open: true, message: 'Usuário atualizado com sucesso!', variant: 'success' });
     } else {
-      alert(error || 'Erro ao atualizar usuário.');
+      setToast({ open: true, message: error || 'Erro ao atualizar usuário.', variant: 'error' });
     }
   };
 
@@ -64,17 +64,15 @@ function AdminUsersContent() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteUser = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) {
-      return;
-    }
-
-    const { success, error } = await usersService.delete(id);
-    
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return;
+    const { success, error } = await usersService.delete(deleteId);
+    setDeleteId(null);
     if (success) {
-      setUsers(users.filter(user => user.id !== id));
+      setUsers(users.filter(u => u.id !== deleteId));
+      setToast({ open: true, message: 'Usuário excluído com sucesso.', variant: 'success' });
     } else {
-      alert(error || 'Não foi possível excluir o usuário.');
+      setToast({ open: true, message: error || 'Não foi possível excluir o usuário.', variant: 'error' });
     }
   };
 
@@ -134,7 +132,7 @@ function AdminUsersContent() {
           <UsersTable
             users={filteredUsers}
             onEdit={handleEditUser}
-            onDelete={handleDeleteUser}
+            onDelete={(id) => setDeleteId(id)}
           />
         )}
       </div>
@@ -145,6 +143,23 @@ function AdminUsersContent() {
         onSubmit={handleCreateUser}
         onUpdate={handleUpdateUser}
         editingUser={editingUser}
+      />
+
+      <Dialog
+        open={!!deleteId}
+        variant="danger"
+        title="Excluir usuário"
+        message="Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteId(null)}
+      />
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={() => setToast(t => ({ ...t, open: false }))}
       />
     </AdminLayout>
   );

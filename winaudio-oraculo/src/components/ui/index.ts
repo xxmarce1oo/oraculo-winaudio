@@ -8,3 +8,5 @@ export { SearchInput } from './SearchInput';
 export { LoadingSpinner } from './LoadingSpinner';
 export { EmptyState } from './EmptyState';
 export { RichTextEditor } from './RichTextEditor';
+export { Dialog } from './Dialog';
+export { Toast } from './Toast';

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Plus, FileText } from 'lucide-react';
 import { rulesService } from '@/services';
 import { AdminLayout, PageHeader } from '@/components/layout';
-import { Button, SearchInput, LoadingSpinner, EmptyState } from '@/components/ui';
+import { Button, SearchInput, LoadingSpinner, EmptyState, Dialog, Toast } from '@/components/ui';
 import { RulesTable } from '@/components/rules';
 import { AuthGuard } from '@/components/auth';
 import type { Rule } from '@/types';
@@ -22,6 +22,8 @@ function AdminRulesContent() {
   const [rules, setRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ open: boolean; message: string; variant: 'success' | 'error' }>({ open: false, message: '', variant: 'success' });
   const router = useRouter();
 
   useEffect(() => {
@@ -39,16 +41,15 @@ function AdminRulesContent() {
     router.push(`/admin/rules/${rule.id}/edit`);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta normativa? A IA não terá mais acesso a esta informação.')) {
-      return;
-    }
-
-    const { success, error } = await rulesService.delete(id);
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return;
+    const { success, error } = await rulesService.delete(deleteId);
+    setDeleteId(null);
     if (success) {
-      setRules(rules.filter(rule => rule.id !== id));
+      setRules(rules.filter(r => r.id !== deleteId));
+      setToast({ open: true, message: 'Normativa excluída com sucesso.', variant: 'success' });
     } else {
-      alert(error || 'Não foi possível excluir a normativa.');
+      setToast({ open: true, message: error || 'Não foi possível excluir a normativa.', variant: 'error' });
     }
   };
 
@@ -102,10 +103,27 @@ function AdminRulesContent() {
           <RulesTable
             rules={filteredRules}
             onEdit={handleEdit}
-            onDelete={handleDelete}
+            onDelete={(id) => setDeleteId(id)}
           />
         )}
       </div>
+
+      <Dialog
+        open={!!deleteId}
+        variant="danger"
+        title="Excluir normativa"
+        message="Tem certeza que deseja excluir esta normativa? A IA não terá mais acesso a esta informação."
+        confirmLabel="Excluir"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteId(null)}
+      />
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={() => setToast(t => ({ ...t, open: false }))}
+      />
     </AdminLayout>
   );
 }

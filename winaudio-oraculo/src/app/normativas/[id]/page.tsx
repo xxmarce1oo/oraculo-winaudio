@@ -117,7 +117,7 @@ function ArticleContent() {
   const Icon = config.icon;
   const departmentName = rule.type === 'me_consulte' 
     ? 'Todos os Setores' 
-    : rule.departments?.[0]?.name || 'Não definido';
+    : rule.departments?.name || 'Não definido';
   
   const videoEmbedUrl = rule.video_url ? getVideoEmbedUrl(rule.video_url) : null;
   const readingTime = rule.reading_time_minutes || Math.max(1, Math.ceil((rule.content?.split(/\s+/).length || 0) / 200));

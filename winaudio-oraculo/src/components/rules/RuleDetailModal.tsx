@@ -14,7 +14,7 @@ export function RuleDetailModal({ rule, onClose }: RuleDetailModalProps) {
 
   const getDepartmentName = (): string => {
     if (rule.type === 'me_consulte') return 'Todos os setores';
-    return rule.departments?.[0]?.name || 'Não definido';
+    return rule.departments?.name || 'Não definido';
   };
 
   return (

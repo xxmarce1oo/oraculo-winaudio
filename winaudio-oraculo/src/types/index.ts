@@ -40,12 +40,15 @@ export interface Rule {
   created_at: string;
   updated_at?: string;
   created_by?: string | null;
-  departments?: Department[] | null;
+  departments?: Department | null;
   video_url?: string | null;
   attachments?: RuleAttachment[] | null;
   replaced_by_id?: string | null;
   replaced_by_title?: string | null;
   reading_time_minutes?: number;
+  codigo_wn?: string | null;
+  vigencia_inicio?: string | null;
+  vigencia_fim?: string | null;
 }
 
 export interface RuleFormData {
@@ -58,6 +61,19 @@ export interface RuleFormData {
   attachments?: RuleAttachment[] | null;
   replaced_by_id?: string | null;
   created_by?: string | null;
+  codigo_wn?: string | null;
+  vigencia_inicio?: string | null;
+  vigencia_fim?: string | null;
+}
+
+// Campos estruturados de uma normativa (tipo = 'normativa')
+export interface NormativaSecoes {
+  objetivo: string;
+  passo_a_passo: string;
+  regras_restricoes: string;
+  procedimento_tecnico: string;
+  checklist_finalizacao: string;
+  consequencias: string;
 }
 
 export interface User {

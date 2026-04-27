@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { Edit, Trash2, Building, Globe, ChevronUp, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui';
 import type { Rule } from '@/types';
+import { RULE_TYPE_LABELS } from '@/types';
 
 interface RulesTableProps {
   rules: Rule[];
@@ -20,7 +21,7 @@ export function RulesTable({ rules, onEdit, onDelete }: RulesTableProps) {
 
   const getDepartmentName = (rule: Rule): string => {
     if (rule.type === 'me_consulte') return 'Todos (Global)';
-    return rule.departments?.[0]?.name || 'Não definido';
+    return rule.departments?.name || 'Não definido';
   };
 
   const handleSort = (key: SortKey) => {
@@ -101,7 +102,7 @@ export function RulesTable({ rules, onEdit, onDelete }: RulesTableProps) {
                   variant={rule.type === 'me_consulte' ? 'primary' : 'secondary'}
                   icon={rule.type === 'me_consulte' ? <Globe size={12} /> : <Building size={12} />}
                 >
-                  {rule.type === 'me_consulte' ? 'Me Consulte' : 'Oráculo'}
+                  {RULE_TYPE_LABELS[rule.type]}
                 </Badge>
               </td>
               <td className="px-6 py-4">

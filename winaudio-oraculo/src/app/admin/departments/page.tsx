@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Building, Plus } from 'lucide-react';
 import { departmentsService } from '@/services';
 import { AdminLayout, PageHeader } from '@/components/layout';
-import { Button, SearchInput, LoadingSpinner, EmptyState } from '@/components/ui';
+import { Button, SearchInput, LoadingSpinner, EmptyState, Dialog, Toast } from '@/components/ui';
 import { DepartmentsTable, DepartmentFormModal } from '@/components/departments';
 import { AuthGuard } from '@/components/auth';
 import type { Department } from '@/types';
@@ -23,6 +23,8 @@ function AdminDepartmentsContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ open: boolean; message: string; variant: 'success' | 'error' }>({ open: false, message: '', variant: 'success' });
 
   useEffect(() => {
     fetchDepartments();
@@ -39,20 +41,20 @@ function AdminDepartmentsContent() {
     if (editingDepartment) {
       const { success, error } = await departmentsService.update(editingDepartment.id, name);
       if (success) {
-        alert('Setor atualizado com sucesso!');
         handleCloseModal();
         fetchDepartments();
+        setToast({ open: true, message: 'Setor atualizado com sucesso!', variant: 'success' });
       } else {
-        alert(error || 'Erro ao atualizar setor.');
+        setToast({ open: true, message: error || 'Erro ao atualizar setor.', variant: 'error' });
       }
     } else {
       const { success, error } = await departmentsService.create(name);
       if (success) {
-        alert('Setor criado com sucesso!');
         handleCloseModal();
         fetchDepartments();
+        setToast({ open: true, message: 'Setor criado com sucesso!', variant: 'success' });
       } else {
-        alert(error || 'Erro ao criar setor.');
+        setToast({ open: true, message: error || 'Erro ao criar setor.', variant: 'error' });
       }
     }
   };
@@ -62,17 +64,15 @@ function AdminDepartmentsContent() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteDepartment = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este setor? Usuários vinculados a ele ficarão sem setor.')) {
-      return;
-    }
-
-    const { success, error } = await departmentsService.delete(id);
-    
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return;
+    const { success, error } = await departmentsService.delete(deleteId);
+    setDeleteId(null);
     if (success) {
-      setDepartments(departments.filter(dep => dep.id !== id));
+      setDepartments(departments.filter(dep => dep.id !== deleteId));
+      setToast({ open: true, message: 'Setor excluído com sucesso.', variant: 'success' });
     } else {
-      alert(error || 'Não foi possível excluir o setor.');
+      setToast({ open: true, message: error || 'Não foi possível excluir o setor.', variant: 'error' });
     }
   };
 
@@ -131,7 +131,7 @@ function AdminDepartmentsContent() {
           <DepartmentsTable
             departments={filteredDepartments}
             onEdit={handleEditDepartment}
-            onDelete={handleDeleteDepartment}
+            onDelete={(id) => setDeleteId(id)}
           />
         )}
       </div>
@@ -141,6 +141,23 @@ function AdminDepartmentsContent() {
         onClose={handleCloseModal}
         onSubmit={handleCreateOrUpdate}
         editingDepartment={editingDepartment}
+      />
+
+      <Dialog
+        open={!!deleteId}
+        variant="danger"
+        title="Excluir setor"
+        message="Tem certeza que deseja excluir este setor? Usuários vinculados a ele ficarão sem setor."
+        confirmLabel="Excluir"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteId(null)}
+      />
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={() => setToast(t => ({ ...t, open: false }))}
       />
     </AdminLayout>
   );

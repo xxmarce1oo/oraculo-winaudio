@@ -4,10 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, FileText, Video, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { rulesService, departmentsService, authService } from '@/services';
-import { Button, Input, Select, Card, RichTextEditor } from '@/components/ui';
+import { Button, Input, Select, Card, RichTextEditor, Toast } from '@/components/ui';
 import { RuleTypeSelector } from '@/components/rules';
+import { FormularioNormativa, montarHtmlNormativa } from '@/components/rules/FormularioNormativa';
 import { AuthGuard } from '@/components/auth';
-import type { Department, RuleType, RuleStatus } from '@/types';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
+import type { Department, RuleType, RuleStatus, NormativaSecoes } from '@/types';
 
 export default function NewRulePage() {
   return (
@@ -23,6 +25,15 @@ const statusOptions: { value: RuleStatus; label: string; icon: React.ElementType
   { value: 'obsoleta', label: 'Obsoleta', icon: XCircle, color: 'text-red-500' },
 ];
 
+const secoesVazias: NormativaSecoes = {
+  objetivo: '',
+  passo_a_passo: '',
+  regras_restricoes: '',
+  procedimento_tecnico: '',
+  checklist_finalizacao: '',
+  consequencias: '',
+};
+
 function NewRuleContent() {
   const [title, setTitle] = useState('');
   const [type, setType] = useState<RuleType>('normativa');
@@ -30,6 +41,10 @@ function NewRuleContent() {
   const [departmentId, setDepartmentId] = useState('');
   const [content, setContent] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
+  const [secoes, setSecoes] = useState<NormativaSecoes>(secoesVazias);
+  const [vigenciaInicio, setVigenciaInicio] = useState('');
+  const [vigenciaFim, setVigenciaFim] = useState('');
+  const [toast, setToast] = useState<{ open: boolean; message: string; variant: 'success' | 'error' }>({ open: false, message: '', variant: 'success' });
 
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,45 +53,66 @@ function NewRuleContent() {
   const router = useRouter();
 
   useEffect(() => {
-    fetchDepartments();
+    departmentsService.getAll().then(({ data }) => {
+      setDepartments(data);
+      setFetchingDeps(false);
+    });
   }, []);
 
-  const fetchDepartments = async () => {
-    const { data } = await departmentsService.getAll();
-    setDepartments(data);
-    setFetchingDeps(false);
-  };
+  const setorSelecionado = departments.find((d) => d.id === departmentId);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const user = await authService.getCurrentUser();
+    try {
+      let conteudoFinal = content;
+      let codigoWn: string | null = null;
 
-    const { success, error } = await rulesService.create({
-      title,
-      content,
-      type,
-      status,
-      department_id: type !== 'me_consulte' ? departmentId : null,
-      video_url: videoUrl || null,
-      created_by: user?.id || null,
-    });
+      if (type === 'normativa') {
+        if (departmentId) {
+          const supabase = createSupabaseBrowserClient();
+          const { data } = await supabase.rpc('proximo_codigo_wn', { p_department_id: departmentId });
+          codigoWn = data as string;
+        }
 
-    if (success) {
-      alert('Artigo publicado com sucesso!');
-      router.push('/admin/rules');
-    } else {
-      alert(error || 'Erro ao publicar o artigo.');
+        conteudoFinal = montarHtmlNormativa(
+          title,
+          codigoWn ?? 'WN000',
+          setorSelecionado?.name ?? '',
+          vigenciaInicio,
+          vigenciaFim,
+          secoes
+        );
+      }
+
+      const user = await authService.getCurrentUser();
+
+      const { success, error } = await rulesService.create({
+        title,
+        content: conteudoFinal,
+        type,
+        status,
+        department_id: type !== 'me_consulte' ? departmentId : null,
+        video_url: videoUrl || null,
+        created_by: user?.id || null,
+        codigo_wn: codigoWn,
+        vigencia_inicio: type === 'normativa' ? vigenciaInicio || null : null,
+        vigencia_fim: type === 'normativa' ? vigenciaFim || null : null,
+      });
+
+      if (success) {
+        setToast({ open: true, message: 'Artigo publicado com sucesso!', variant: 'success' });
+        setTimeout(() => router.push('/admin/rules'), 1500);
+      } else {
+        setToast({ open: true, message: error || 'Erro ao publicar o artigo.', variant: 'error' });
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  const departmentOptions = departments.map((dep) => ({
-    value: dep.id,
-    label: dep.name,
-  }));
+  const departmentOptions = departments.map((dep) => ({ value: dep.id, label: dep.name }));
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-base)] font-sans">
@@ -103,7 +139,6 @@ function NewRuleContent() {
           </div>
 
           <form onSubmit={handleSave} className="space-y-8">
-            {/* Informações Básicas */}
             <section>
               <h2 className="text-lg font-semibold text-[var(--color-primary-dark)] mb-4">
                 Informações Básicas
@@ -121,22 +156,19 @@ function NewRuleContent() {
                 <RuleTypeSelector value={type} onChange={setType} />
 
                 {type !== 'me_consulte' && (
-                  <div className="animate-in fade-in slide-in-from-top-2">
-                    <Select
-                      label="Departamento Responsável"
-                      required
-                      value={departmentId}
-                      onChange={(e) => setDepartmentId(e.target.value)}
-                      disabled={fetchingDeps}
-                      options={departmentOptions}
-                      placeholder="Selecione o setor responsável..."
-                    />
-                  </div>
+                  <Select
+                    label="Departamento Responsável"
+                    required
+                    value={departmentId}
+                    onChange={(e) => setDepartmentId(e.target.value)}
+                    disabled={fetchingDeps}
+                    options={departmentOptions}
+                    placeholder="Selecione o setor responsável..."
+                  />
                 )}
               </div>
             </section>
 
-            {/* Status do Documento */}
             <section>
               <h2 className="text-lg font-semibold text-[var(--color-primary-dark)] mb-4">
                 Status do Documento
@@ -150,13 +182,7 @@ function NewRuleContent() {
                       key={option.value}
                       type="button"
                       onClick={() => setStatus(option.value)}
-                      className={`
-                        p-4 rounded-xl border-2 transition-all text-left
-                        ${isSelected
-                          ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5'
-                          : 'border-[var(--color-border)] hover:border-[var(--color-primary)]/50 bg-[var(--color-bg-white)]'
-                        }
-                      `}
+                      className={`p-4 rounded-xl border-2 transition-all text-left ${isSelected ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5' : 'border-[var(--color-border)] hover:border-[var(--color-primary)]/50 bg-[var(--color-bg-white)]'}`}
                     >
                       <Icon size={24} className={option.color} />
                       <p className={`mt-2 font-medium ${isSelected ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-primary)]'}`}>
@@ -168,41 +194,49 @@ function NewRuleContent() {
               </div>
             </section>
 
-            {/* Conteúdo do Artigo */}
             <section>
               <h2 className="text-lg font-semibold text-[var(--color-primary-dark)] mb-4">
                 Conteúdo do Artigo
               </h2>
-              <RichTextEditor
-                content={content}
-                onChange={setContent}
-                placeholder="Escreva o conteúdo do artigo aqui. Use a barra de ferramentas para formatar o texto..."
-              />
+
+              {type === 'normativa' ? (
+                <FormularioNormativa
+                  secoes={secoes}
+                  onChange={setSecoes}
+                  codigoWn={departmentId ? `WN${setorSelecionado?.name.substring(0, 3).toUpperCase()}###` : ''}
+                  vigenciaInicio={vigenciaInicio}
+                  vigenciaFim={vigenciaFim}
+                  onVigenciaInicioChange={setVigenciaInicio}
+                  onVigenciaFimChange={setVigenciaFim}
+                />
+              ) : (
+                <RichTextEditor
+                  content={content}
+                  onChange={setContent}
+                  placeholder="Escreva o conteúdo do artigo aqui. Use a barra de ferramentas para formatar o texto..."
+                />
+              )}
             </section>
 
-            {/* Mídia */}
             <section>
               <h2 className="text-lg font-semibold text-[var(--color-primary-dark)] mb-4">
                 Mídia (Opcional)
               </h2>
-              <div className="space-y-4">
-                <div className="relative">
-                  <Input
-                    label="URL do Vídeo"
-                    type="url"
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                    placeholder="https://www.youtube.com/watch?v=... ou https://vimeo.com/..."
-                  />
-                  <Video size={18} className="absolute right-3 top-9 text-[var(--color-text-light)]" />
-                </div>
-                <p className="text-xs text-[var(--color-text-muted)]">
-                  Cole a URL de um vídeo do YouTube ou Vimeo para incorporá-lo ao artigo.
-                </p>
+              <div className="relative">
+                <Input
+                  label="URL do Vídeo"
+                  type="url"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=... ou https://vimeo.com/..."
+                />
+                <Video size={18} className="absolute right-3 top-9 text-[var(--color-text-light)]" />
               </div>
+              <p className="text-xs text-[var(--color-text-muted)] mt-2">
+                Cole a URL de um vídeo do YouTube ou Vimeo para incorporá-lo ao artigo.
+              </p>
             </section>
 
-            {/* Ações */}
             <div className="pt-6 border-t border-[var(--color-border-light)] flex items-center justify-between">
               <button
                 type="button"
@@ -211,19 +245,20 @@ function NewRuleContent() {
               >
                 Cancelar
               </button>
-              <Button
-                type="submit"
-                variant="secondary"
-                size="lg"
-                loading={loading}
-                icon={<Save size={20} />}
-              >
+              <Button type="submit" variant="secondary" size="lg" loading={loading} icon={<Save size={20} />}>
                 {loading ? 'Publicando...' : 'Publicar Artigo'}
               </Button>
             </div>
           </form>
         </Card>
       </div>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        variant={toast.variant}
+        onClose={() => setToast(t => ({ ...t, open: false }))}
+      />
     </div>
   );
 }

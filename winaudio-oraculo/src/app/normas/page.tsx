@@ -72,7 +72,7 @@ function NormasContent() {
     return filteredRules.reduce<GroupedRules>((acc, rule) => {
       const departmentName = rule.type === 'me_consulte' 
         ? 'Todos os Setores' 
-        : rule.departments?.[0]?.name || 'Sem Setor';
+        : rule.departments?.name || 'Sem Setor';
       
       if (!acc[departmentName]) {
         acc[departmentName] = [];
