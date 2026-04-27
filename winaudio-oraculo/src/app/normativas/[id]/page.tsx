@@ -9,7 +9,7 @@ import {
   Calendar,
   Building,
   Hash,
-  Printer,
+  FileDown,
   FileText,
   BookOpen,
   Globe,
@@ -201,7 +201,7 @@ function ArticleContent() {
               onClick={handlePrint}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-bg-muted)] rounded-xl transition-all"
             >
-              <Printer size={18} />
+              <FileDown size={18} />
               <span className="hidden sm:inline">Imprimir</span>
             </button>
           </div>
@@ -357,8 +357,8 @@ function ArticleContent() {
                 onClick={handlePrint}
                 className="flex items-center gap-2 px-5 py-2.5 bg-[var(--color-primary)] text-white font-medium rounded-xl hover:bg-[var(--color-primary-dark)] transition-colors shadow-sm"
               >
-                <Printer size={18} />
-                Imprimir Documento
+                <FileDown size={18} />
+                Exportar PDF
               </button>
             </div>
           </div>
@@ -376,19 +376,22 @@ function ArticleContent() {
         </div>
       </main>
 
-      {/* Print Styles */}
+      {/* Print / PDF Styles */}
       <style jsx global>{`
         @media print {
-          body {
-            background: white !important;
-          }
-          .print\\:hidden {
-            display: none !important;
-          }
+          body { background: white !important; margin: 0; }
+          .print\\:hidden { display: none !important; }
+          nav, header, footer { display: none !important; }
           article {
             box-shadow: none !important;
             border: none !important;
+            border-radius: 0 !important;
           }
+          main { padding: 0 !important; max-width: 100% !important; }
+          h1 { font-size: 22pt !important; }
+          .prose { font-size: 11pt !important; line-height: 1.6 !important; }
+          a { color: inherit !important; text-decoration: none !important; }
+          @page { margin: 2cm; size: A4; }
         }
       `}</style>
     </div>

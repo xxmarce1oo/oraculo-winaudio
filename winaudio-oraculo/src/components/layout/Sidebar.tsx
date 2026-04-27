@@ -1,11 +1,12 @@
 'use client';
 
-import { BookOpen, MessageCircle, LogOut, User, FileText, Users, Building, CalendarDays, Bell } from 'lucide-react';
+import { BookOpen, MessageCircle, LogOut, User, FileText, Users, Building, CalendarDays, Bell, LayoutDashboard, BookUser } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Logo } from './Logo';
 import { authService, avisosService } from '@/services';
 import { useAuth } from '@/context/AuthContext';
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 
 interface NavItem {
   label: string;
@@ -23,8 +24,22 @@ export function Sidebar({ variant = 'employee' }: { variant?: 'admin' | 'employe
 
   useEffect(() => {
     if (!profile) return;
+
     avisosService.countUnread().then(setUnreadAvisos);
-  }, [profile, pathname]); // recontagem ao navegar
+
+    const supabase = createSupabaseBrowserClient();
+    const channel = supabase
+      .channel('sidebar-avisos')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'avisos' }, () => {
+        avisosService.countUnread().then(setUnreadAvisos);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'aviso_readings' }, () => {
+        avisosService.countUnread().then(setUnreadAvisos);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [profile]);
 
   const handleLogout = async () => {
     await authService.logout();
@@ -34,6 +49,7 @@ export function Sidebar({ variant = 'employee' }: { variant?: 'admin' | 'employe
 
   const isActive = (href: string) => {
     if (href === '/normas') return pathname === '/normas';
+    if (href === '/admin') return pathname === '/admin';
     return pathname?.startsWith(href);
   };
 
@@ -45,14 +61,17 @@ export function Sidebar({ variant = 'employee' }: { variant?: 'admin' | 'employe
     { label: 'Oráculo IA', href: '/normas/chat', icon: <MessageCircle size={20} /> },
     { label: 'Salas', href: '/salas', icon: <CalendarDays size={20} /> },
     { label: 'Avisos', href: '/avisos', icon: <Bell size={20} />, badge: unreadAvisos },
+    { label: 'Contatos', href: '/contatos', icon: <BookUser size={20} /> },
   ];
 
   const adminNavItems: NavItem[] = [
+    { label: 'Dashboard', href: '/admin', icon: <LayoutDashboard size={20} />, adminOnly: true },
     { label: 'Gestão de Normas', href: '/admin/rules', icon: <FileText size={20} />, adminOnly: true },
     { label: 'Gestão de Salas', href: '/admin/salas', icon: <CalendarDays size={20} />, adminOnly: true },
     { label: 'Gestão de Usuários', href: '/admin/users', icon: <Users size={20} />, adminOnly: true },
     { label: 'Gestão de Setores', href: '/admin/departments', icon: <Building size={20} />, adminOnly: true },
     { label: 'Mural de Avisos', href: '/admin/avisos', icon: <Bell size={20} />, adminOnly: true },
+    { label: 'Contatos', href: '/admin/contatos', icon: <BookUser size={20} />, adminOnly: true },
   ];
 
   const allItems = isAdmin ? [...baseNavItems, ...adminNavItems] : baseNavItems;

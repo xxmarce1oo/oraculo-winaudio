@@ -103,4 +103,18 @@ export const avisosService = {
     if (error) return { success: false, error: 'Erro ao atualizar aviso' };
     return { success: true, error: null };
   },
+
+  async update(id: string, aviso: { titulo: string; conteudo: string; fixado?: boolean }): Promise<{ success: boolean; error: string | null }> {
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.from('avisos').update(aviso).eq('id', id);
+    if (error) return { success: false, error: 'Erro ao editar aviso' };
+    return { success: true, error: null };
+  },
+
+  async delete(id: string): Promise<{ success: boolean; error: string | null }> {
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.from('avisos').delete().eq('id', id);
+    if (error) return { success: false, error: 'Erro ao excluir aviso' };
+    return { success: true, error: null };
+  },
 };
